@@ -1,5 +1,5 @@
 import { Lock, FileText, ArrowLeft } from 'lucide-react';
-import { GlossaryEntry, EntryStatus } from '../lib/types';
+import { GlossaryEntry } from '../lib/types';
 import { generateSlug, getTodayISO } from '../lib/validate';
 
 interface EntryEditorProps {
@@ -7,6 +7,11 @@ interface EntryEditorProps {
   onUpdate: (entry: GlossaryEntry) => void;
   onBack?: () => void;
   showBackButton?: boolean;
+}
+
+function parseTags(tagStr: string): string[] {
+  if (!tagStr) return [];
+  return tagStr.split(',').map(t => t.trim()).filter(Boolean);
 }
 
 export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }: EntryEditorProps) {
@@ -21,15 +26,16 @@ export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }:
 
   const isDeprecated = entry.status === 'deprecated';
   const shortLength = entry.short?.length || 0;
+  const tagPills = parseTags(entry.tags);
 
   const handleChange = (field: keyof GlossaryEntry, value: string) => {
     const updated = { ...entry, [field]: value, updated_at: getTodayISO() };
-    
+
     // Auto-generate slug if title changes and slug is empty
     if (field === 'title' && !entry.slug) {
       updated.slug = generateSlug(value);
     }
-    
+
     onUpdate(updated);
   };
 
@@ -69,11 +75,12 @@ export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }:
       {isDeprecated && (
         <div className="deprecated-banner">
           <Lock size={18} />
-          <span>This entry is deprecated. Status is locked and cannot be changed.</span>
+          <span>Dieser Eintrag ist veraltet. Status ist gesperrt und kann nicht ge&auml;ndert werden.</span>
         </div>
       )}
 
       <div className="editor-form">
+        {/* Row: ID + Status */}
         <div className="form-row">
           <div className="form-group">
             <label className="form-label">ID (Read-only)</label>
@@ -93,14 +100,21 @@ export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }:
               onChange={(e) => handleStatusChange(e.target.value)}
               disabled={isDeprecated}
             >
-              <option value="active">Active</option>
-              <option value="draft">Draft</option>
-              <option value="archived">Archived</option>
-              <option value="deprecated">Deprecated</option>
+              <option value="active">active</option>
+              <option value="draft">draft</option>
+              <option value="archived">archived</option>
+              <option
+                value="deprecated"
+                disabled={!isDeprecated}
+                style={{ opacity: 0.5 }}
+              >
+                deprecated (gesperrt)
+              </option>
             </select>
           </div>
         </div>
 
+        {/* Title */}
         <div className="form-group">
           <label className="form-label">Title</label>
           <input
@@ -112,10 +126,11 @@ export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }:
           />
         </div>
 
+        {/* Slug */}
         <div className="form-group">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <label className="form-label">Slug</label>
-            <button 
+            <button
               className="btn btn-ghost btn-sm"
               onClick={handleGenerateSlug}
               type="button"
@@ -132,6 +147,7 @@ export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }:
           />
         </div>
 
+        {/* URL */}
         <div className="form-group">
           <label className="form-label">URL</label>
           <input
@@ -143,6 +159,7 @@ export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }:
           />
         </div>
 
+        {/* Short Description */}
         <div className="form-group">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <label className="form-label">Short Description</label>
@@ -159,6 +176,7 @@ export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }:
           />
         </div>
 
+        {/* Long Description */}
         <div className="form-group">
           <label className="form-label">Long Description</label>
           <textarea
@@ -170,56 +188,82 @@ export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }:
           />
         </div>
 
+        {/* Row: Category + Level */}
         <div className="form-row">
           <div className="form-group">
             <label className="form-label">Category</label>
-            <input
-              type="text"
+            <select
               className="form-input"
               value={entry.category}
               onChange={(e) => handleChange('category', e.target.value)}
-              placeholder="e.g., Banking, Investment..."
-            />
+            >
+              <option value="">— select —</option>
+              <option value="trading">trading</option>
+              <option value="grundlagen">grundlagen</option>
+              <option value="krypto">krypto</option>
+              <option value="psychologie">psychologie</option>
+              <option value="wirtschaft">wirtschaft</option>
+              <option value="sonstiges">sonstiges</option>
+            </select>
           </div>
 
           <div className="form-group">
             <label className="form-label">Level</label>
-            <input
-              type="text"
+            <select
               className="form-input"
               value={entry.level}
               onChange={(e) => handleChange('level', e.target.value)}
-              placeholder="e.g., beginner, advanced..."
-            />
+            >
+              <option value="">— select —</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
           </div>
         </div>
 
+        {/* Row: Visibility + App Priority */}
         <div className="form-row">
           <div className="form-group">
             <label className="form-label">Visibility</label>
-            <input
-              type="text"
+            <select
               className="form-input"
               value={entry.visibility}
               onChange={(e) => handleChange('visibility', e.target.value)}
-              placeholder="e.g., public, internal..."
-            />
+            >
+              <option value="">— select —</option>
+              <option value="public">public</option>
+              <option value="private">private</option>
+              <option value="hidden">hidden</option>
+            </select>
           </div>
 
           <div className="form-group">
             <label className="form-label">App Priority</label>
-            <input
-              type="text"
+            <select
               className="form-input"
               value={entry.app_priority}
               onChange={(e) => handleChange('app_priority', e.target.value)}
-              placeholder="e.g., high, medium, low..."
-            />
+            >
+              <option value="">— select —</option>
+              <option value="must">must</option>
+              <option value="should">should</option>
+              <option value="optional">optional</option>
+              <option value="skip">skip</option>
+            </select>
           </div>
         </div>
 
+        {/* Tags — pills display + editable input */}
         <div className="form-group">
           <label className="form-label">Tags (comma-separated)</label>
+          {tagPills.length > 0 && (
+            <div className="editor-tag-pills">
+              {tagPills.map((tag, i) => (
+                <span key={i} className="tag-pill">{tag}</span>
+              ))}
+            </div>
+          )}
           <input
             type="text"
             className="form-input"
@@ -230,6 +274,7 @@ export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }:
           <span className="form-help">Separate multiple tags with commas</span>
         </div>
 
+        {/* Synonyms */}
         <div className="form-group">
           <label className="form-label">Synonyms (comma-separated)</label>
           <input
@@ -237,10 +282,11 @@ export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }:
             className="form-input"
             value={entry.synonyms}
             onChange={(e) => handleChange('synonyms', e.target.value)}
-            placeholder="synonym1, synonym2..."
+            placeholder="z.B. BBands, Bollinger"
           />
         </div>
 
+        {/* Sources */}
         <div className="form-group">
           <label className="form-label">Sources (comma-separated)</label>
           <textarea
@@ -252,6 +298,7 @@ export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }:
           />
         </div>
 
+        {/* Notes */}
         <div className="form-group">
           <label className="form-label">Notes</label>
           <textarea
@@ -263,6 +310,7 @@ export default function EntryEditor({ entry, onUpdate, onBack, showBackButton }:
           />
         </div>
 
+        {/* Updated At */}
         <div className="form-group">
           <label className="form-label">Updated At</label>
           <input

@@ -24,6 +24,10 @@ export default function Filters({ filters, onFilterChange, categories }: Filters
     onFilterChange({ ...filters, sort: e.target.value as SortOption });
   };
 
+  const handleClearSearch = () => {
+    onFilterChange({ ...filters, search: '' });
+  };
+
   return (
     <div className="filters-section">
       <div className="search-box">
@@ -34,11 +38,21 @@ export default function Filters({ filters, onFilterChange, categories }: Filters
           value={filters.search}
           onChange={handleSearchChange}
         />
+        {filters.search && (
+          <button
+            className="search-clear-btn"
+            onClick={handleClearSearch}
+            title="Clear search"
+            aria-label="Clear search"
+          >
+            &times;
+          </button>
+        )}
       </div>
 
       <div className="filter-row">
-        <select 
-          className="filter-select" 
+        <select
+          className="filter-select"
           value={filters.status}
           onChange={handleStatusChange}
         >
@@ -49,7 +63,7 @@ export default function Filters({ filters, onFilterChange, categories }: Filters
           <option value="deprecated">Deprecated</option>
         </select>
 
-        <select 
+        <select
           className="filter-select"
           value={filters.category}
           onChange={handleCategoryChange}
@@ -60,7 +74,7 @@ export default function Filters({ filters, onFilterChange, categories }: Filters
           ))}
         </select>
 
-        <select 
+        <select
           className="filter-select"
           value={filters.sort}
           onChange={handleSortChange}
